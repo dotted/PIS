@@ -1,0 +1,32 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+    
+   	<EditText android:id="@+id/edit_icao"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:hint="@string/edit_message" />
+   	
+   	<Button
+   	android:layout_toRightOf="@+id/edit_icao"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="@string/button_getmetar"
+    android:onClick="showMetar" />
+   	
+   	<TextView android:id="@+id/text_metar"
+   	    android:layout_below="@+id/edit_icao"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:text="@string/welcome_message"/>
+   	
+   	<fragment android:id="@+id/map"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/text_metar"
+        class="com.google.android.gms.maps.SupportMapFragment" />
+
+</RelativeLayout>
