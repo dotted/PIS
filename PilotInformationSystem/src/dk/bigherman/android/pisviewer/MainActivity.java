@@ -1,6 +1,7 @@
 package dk.bigherman.android.pisviewer;
 
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -62,6 +63,13 @@ public class MainActivity extends FragmentActivity
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
 	{
+		
+		if (android.os.Build.VERSION.SDK_INT > 9) {
+			StrictMode.ThreadPolicy policy = 
+			        new StrictMode.ThreadPolicy.Builder().permitAll().build();
+			StrictMode.setThreadPolicy(policy);
+			}
+		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
@@ -142,7 +150,7 @@ public class MainActivity extends FragmentActivity
 	    	String metar, colour;
 	    	
 	    	EditText icaoText = (EditText) findViewById(R.id.edit_icao);
-	    	String icaoCode = icaoText.getText().toString();
+	    	String icaoCode = icaoText.getText().toString().toUpperCase();
 	    	
 	    	Log.i("airfields", "Start db load");
             try 
