@@ -57,7 +57,7 @@ import dk.bigherman.android.pisviewer.DataBaseHelper;
 public class MainActivity extends FragmentActivity 
 {
 	GoogleMap gMap;
-	String serverIP = "86.52.111.181";
+	String serverIP = getResources().getString(R.string.server_ip);
 	DataBaseHelper myDbHelper;
 	//private enum Colour{BLU, WHT, GRN, YLO, AMB, RED, BLK, NIL};
 	
@@ -166,7 +166,7 @@ public class MainActivity extends FragmentActivity
 	    	String metar, colour;
 	    	
 	    	EditText icaoText = (EditText) findViewById(R.id.edit_icao);
-	    	String icaoCode = icaoText.getText().toString().toUpperCase();
+	    	String icaoCode = icaoText.getText().toString();
 	    	
 	    	Log.i("airfields", "Start db load");
 	    	boolean flag = CommonMethods.validateIcao(icaoCode, "^[A-Z]{4}$", myDbHelper);
@@ -196,8 +196,8 @@ public class MainActivity extends FragmentActivity
 	    
 			TextView textMetar = (TextView) findViewById(R.id.text_metar);
 			textMetar.setText(metar);
- 
-    	 	Log.i("airfields", "Next airfield call, NE=" + mapBounds.northeast.toString());
+			
+			Log.i("airfields", "Next airfield call, NE=" + mapBounds.northeast.toString());
     	 	int icon_state=R.drawable.icn_empty;
                       
             for (int i=0; i<airfields.size();i++)
