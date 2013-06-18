@@ -57,7 +57,7 @@ import dk.bigherman.android.pisviewer.DataBaseHelper;
 public class MainActivity extends FragmentActivity 
 {
 	GoogleMap gMap;
-	String serverIP = getResources().getString(R.string.server_ip);
+	String serverIP = "";
 	DataBaseHelper myDbHelper;
 	//private enum Colour{BLU, WHT, GRN, YLO, AMB, RED, BLK, NIL};
 	
@@ -118,6 +118,8 @@ public class MainActivity extends FragmentActivity
 		{
 			throw sqle;
 		}
+		
+		serverIP = getResources().getString(R.string.server_ip);
 	}
 	
 	public boolean onOptionsItemSelected (MenuItem item)
@@ -161,12 +163,11 @@ public class MainActivity extends FragmentActivity
 		imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
 		
 		try 
-	    {
-	    	
+	    {	    	
 	    	String metar, colour;
 	    	
 	    	EditText icaoText = (EditText) findViewById(R.id.edit_icao);
-	    	String icaoCode = icaoText.getText().toString();
+	    	String icaoCode = icaoText.getText().toString().toUpperCase();
 	    	
 	    	Log.i("airfields", "Start db load");
 	    	boolean flag = CommonMethods.validateIcao(icaoCode, "^[A-Z]{4}$", myDbHelper);
