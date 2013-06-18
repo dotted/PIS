@@ -58,8 +58,10 @@ public class MainActivity extends FragmentActivity
 {
 	GoogleMap gMap;
 	String serverIP = "86.52.111.181";
+	DataBaseHelper myDbHelper;
 	//private enum Colour{BLU, WHT, GRN, YLO, AMB, RED, BLK, NIL};
 	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
 	{
@@ -101,6 +103,21 @@ public class MainActivity extends FragmentActivity
             // Zoom in the Google Map at a level where all (most) of Denmark will be visible
             gMap.animateCamera(CameraUpdateFactory.zoomTo(6));
         }
+		myDbHelper = new DataBaseHelper(this.getApplicationContext());
+		try 
+		{
+			// To do, rewrite it ALL
+			myDbHelper.createDataBase();
+			myDbHelper.openDataBase();
+		}
+		catch (IOException ioe)
+		{
+			throw new Error("Unable to create database");
+		}
+		catch(SQLException sqle)
+		{
+			throw sqle;
+		}
 	}
 	
 	public boolean onOptionsItemSelected (MenuItem item)
@@ -145,7 +162,6 @@ public class MainActivity extends FragmentActivity
 		
 		try 
 	    {
-	    	DataBaseHelper myDbHelper = new DataBaseHelper(this.getApplicationContext());
 	    	
 	    	String metar, colour;
 	    	
@@ -153,20 +169,13 @@ public class MainActivity extends FragmentActivity
 	    	String icaoCode = icaoText.getText().toString().toUpperCase();
 	    	
 	    	Log.i("airfields", "Start db load");
-            try 
-            {
-            	myDbHelper.createDataBase();
-            	myDbHelper.openDataBase();
-    	 	}
-            catch (IOException ioe)
-            {
-    	 		throw new Error("Unable to create database");
-    	 	}
-            catch(SQLException sqle)
-            {
-    	 		throw sqle;
-    	 	}
-            
+	    	boolean flag = CommonMethods.validateIcao(icaoCode, "^[A-Z]{4}$", myDbHelper);
+	    	if (!flag)
+	    	{
+		    	Toast.makeText(getApplicationContext(), "Invalid ICAO code", Toast.LENGTH_LONG).show();
+	    		return;
+	    	}
+	    	
             LatLng mapCentre = myDbHelper.icaoToLatLng(icaoCode);
             gMap.moveCamera(CameraUpdateFactory.newLatLng(mapCentre));
             LatLngBounds mapBounds = new LatLngBounds(new LatLng(mapCentre.latitude-3.0, mapCentre.longitude-(2.5/Math.cos(mapCentre.latitude*Math.PI/180))), new LatLng(mapCentre.latitude+3.0, mapCentre.longitude+(2.5/Math.cos(mapCentre.latitude*Math.PI/180))));
@@ -248,61 +257,53 @@ public class MainActivity extends FragmentActivity
 	
 	private String readMetarFeed(String icaoCode) 
 	{
-	    String metarURL = "http://" + serverIP + "/test_json.php?icao=" + icaoCode;
-	   		
-		//String metarURL = "http://duku.no-ip.info/pis/android/jason.php?i=" + icaoCode;
 		
+		//String metarURL = "http://duku.no-ip.info/pis/android/jason.php?i=" + icaoCode;
+
+		String metarURL = "http://" + serverIP + "/test_json.php?icao="
+				+ icaoCode;
 		StringBuilder builder = new StringBuilder();
-	    	    
-	    HttpGet httpGet = new HttpGet(metarURL);
-	    HttpParams httpParameters = new BasicHttpParams();
-	    
+		HttpGet httpGet = new HttpGet(metarURL);
+		HttpParams httpParameters = new BasicHttpParams();
 		// Set the timeout in milliseconds until a connection is established.
 		// The default value is zero, that means the timeout is not used. 
 		int timeoutConnection = 3000;
-		HttpConnectionParams.setConnectionTimeout(httpParameters, timeoutConnection);
+		HttpConnectionParams.setConnectionTimeout(httpParameters,
+				timeoutConnection);
 		// Set the default socket timeout (SO_TIMEOUT) 
 		// in milliseconds which is the timeout for waiting for data.
 		int timeoutSocket = 5000;
-		HttpConnectionParams.setSoTimeout(httpParameters, timeoutSocket);
-	
+		HttpConnectionParams
+				.setSoTimeout(httpParameters, timeoutSocket);
 		DefaultHttpClient client = new DefaultHttpClient(httpParameters);
-			
 		client.setParams(httpParameters);
-	    
-	    try
-	    {
-	    	HttpResponse response = client.execute(httpGet);
-	    	StatusLine statusLine = response.getStatusLine();
-	    	int statusCode = statusLine.getStatusCode();
-	    	if (statusCode == 200)
-	    	{
-	    		HttpEntity entity = response.getEntity();
-	    		InputStream content = entity.getContent();
-	    		BufferedReader reader = new BufferedReader(new InputStreamReader(content));
-	    		String line;
-	    		while ((line = reader.readLine()) != null)
-	    		{
-	    			builder.append(line);
-	    		}
-	    	}
-	    	else
-	    	{
-	    		Log.e(MainActivity.class.toString(), "Failed to download file");
-	    	}
-	    }
-	    catch (ClientProtocolException e)
-	    {
-	    	e.printStackTrace();
-	    	throw new RuntimeException("Error connecting to server - check IP address.  Use Settings menu to fix this");
-	    }
-	    catch (IOException e)
-	    {
-	    	e.printStackTrace();
-	    	throw new RuntimeException("Error connecting to server - check IP address.  Use Settings menu to fix this");
-	    }
-	    
-	    return builder.toString();
+		try {
+			HttpResponse response = client.execute(httpGet);
+			StatusLine statusLine = response.getStatusLine();
+			int statusCode = statusLine.getStatusCode();
+			if (statusCode == 200) {
+				HttpEntity entity = response.getEntity();
+				InputStream content = entity.getContent();
+				BufferedReader reader = new BufferedReader(
+						new InputStreamReader(content));
+				String line;
+				while ((line = reader.readLine()) != null) {
+					builder.append(line);
+				}
+			} else {
+				Log.e(MainActivity.class.toString(),
+						"Failed to download file");
+			}
+		} catch (ClientProtocolException e) {
+			e.printStackTrace();
+			throw new RuntimeException(
+					"Error connecting to server - check IP address.  Use Settings menu to fix this");
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new RuntimeException(
+					"Error connecting to server - check IP address.  Use Settings menu to fix this");
+		}
+		return builder.toString();
 	}
 
 	@Override

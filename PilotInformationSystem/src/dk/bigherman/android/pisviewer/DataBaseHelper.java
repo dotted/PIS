@@ -219,4 +219,14 @@ public class DataBaseHelper extends SQLiteOpenHelper
 			
 			return airfieldsInArea;
 		}
+		
+		public boolean validateIcaoWithDb(String icao)
+		  {
+		   Log.i("validateIcao", "SELECT icao FROM airfields WHERE icao = '" + icao + "'");
+		   Cursor myCursor = myDataBase.rawQuery("SELECT icao FROM airfields WHERE icao = '" + icao + "'", null);
+		   if (myCursor.getCount() > 0)
+		    return true;
+		   return false;
+		  }
+		
 }
