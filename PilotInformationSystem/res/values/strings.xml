@@ -7,5 +7,6 @@
     <string name="edit_message">Enter ICAO code here</string>
     <string name="button_getmetar">Get Metar!</string>
     <string name="menu_setserver">Set Server IP</string>
+    <string name="server_ip">86.52.111.181</string>
 
 </resources>
