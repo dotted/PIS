@@ -22,7 +22,7 @@ import android.util.Log;
 
 public final class CommonMethods
 {
-	private static boolean validateIcaoWithRegex(String icao, String regexPattern)
+	private static boolean validateStringWithRegex(String icao, String regexPattern)
 	{
 		Pattern r = Pattern.compile(regexPattern);
 		Matcher m = r.matcher(icao);
@@ -33,9 +33,11 @@ public final class CommonMethods
 		return false;
 	}
  
-	public static boolean validateIcao(String icao, String regexPattern, DataBaseHelper dbHelper)
+	public static boolean validateIcao(String icao, DataBaseHelper dbHelper)
 	{
-		Boolean regexFlag = validateIcaoWithRegex(icao, regexPattern);
+		String regexPattern = "^[A-Z]{4}$";
+
+		Boolean regexFlag = validateStringWithRegex(icao, regexPattern);
 		if (regexFlag)
 		{
 			dbHelper.openDataBase();

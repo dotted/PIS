@@ -200,7 +200,7 @@ public class MainActivity extends FragmentActivity
     	
     	//Validate ICAO code.
     	Log.i("Test", "Validate ICAO");
-    	boolean flag = CommonMethods.validateIcao(icaoCode, "^[A-Z]{4}$", myDbHelper);
+    	boolean flag = CommonMethods.validateIcao(icaoCode, myDbHelper);
     	// If invalid show error message and return
     	if (!flag)
     	{
