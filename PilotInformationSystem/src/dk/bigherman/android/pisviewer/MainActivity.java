@@ -50,8 +50,10 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
@@ -60,14 +62,13 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import dk.bigherman.android.pisviewer.Airfield;
 import dk.bigherman.android.pisviewer.DataBaseHelper;
 
-public class MainActivity extends FragmentActivity 
+public class MainActivity extends FragmentActivity implements OnCameraChangeListener 
 {
 	GoogleMap gMap;
 	String serverIP = "";
 	DataBaseHelper myDbHelper;
 	//private enum Colour{BLU, WHT, GRN, YLO, AMB, RED, BLK, NIL};
 	
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
 	{
@@ -124,6 +125,8 @@ public class MainActivity extends FragmentActivity
      
             // Zoom in the Google Map at a level where all (most) of Denmark will be visible
             gMap.animateCamera(CameraUpdateFactory.zoomTo(6));
+            
+            gMap.setOnCameraChangeListener(this);
             
             loadMarkersTask loader = new loadMarkersTask();
             loader.execute(latLng);
@@ -241,7 +244,6 @@ public class MainActivity extends FragmentActivity
 	    	//Show metar information in whitespace
 	    	Log.i("Test", "Show Metar Information");
 	    	showMetarText(jsonObject);
-
 	    	
         } catch (JSONException e) {        	
         	e.printStackTrace();
@@ -418,5 +420,15 @@ public class MainActivity extends FragmentActivity
 			drawMapMarkers(result);			
 		}		
 		
+	}
+
+	@Override
+	public void onCameraChange(CameraPosition arg0) {
+		// TODO Auto-generated method stub'
+		Log.i("Test", "Location changed");
+		LatLng latLng = arg0.target;
+		
+        loadMarkersTask loader = new loadMarkersTask();
+        loader.execute(latLng);
 	}
 }	
