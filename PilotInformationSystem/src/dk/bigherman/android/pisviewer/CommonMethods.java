@@ -35,20 +35,14 @@ public final class CommonMethods
 
 	public static boolean validateIcao(String icao, DataBaseHelper dbHelper)
 	{
-		String regexPattern = "^[A-Z]{4}$";
-
-		Boolean regexFlag = validateStringWithRegex(icao, regexPattern);
-		if (regexFlag)
+		Boolean icaoIsValiated = false;
+		if (validateStringWithRegex(icao, "^[A-Z]{4}$"))
 		{
 			dbHelper.openDataBase();
-			Boolean dbFlag = dbHelper.validateIcaoWithDb(icao);
+			icaoIsValiated = dbHelper.validateIcaoWithDb(icao);
 			dbHelper.close();
-			if (dbFlag)
-			{
-				return true;
-			}
 		}
-		return false;
+		return icaoIsValiated;
 	}
 
 	public static String getJson(String url) 
