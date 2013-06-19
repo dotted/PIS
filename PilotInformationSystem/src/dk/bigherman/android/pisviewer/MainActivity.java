@@ -1,5 +1,6 @@
 package dk.bigherman.android.pisviewer;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.app.Activity;
@@ -38,6 +39,7 @@ import org.json.JSONObject;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Loader;
 import android.database.SQLException;
 import android.os.Bundle;
 import android.util.Log;
@@ -69,7 +71,6 @@ public class MainActivity extends FragmentActivity
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
 	{
-		
 		if (android.os.Build.VERSION.SDK_INT > 9) {
 			StrictMode.ThreadPolicy policy = 
 			        new StrictMode.ThreadPolicy.Builder().permitAll().build();
@@ -78,6 +79,23 @@ public class MainActivity extends FragmentActivity
 		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		
+		myDbHelper = new DataBaseHelper(this.getApplicationContext());
+		try 
+		{
+			// To do, rewrite it ALL
+			myDbHelper.createDataBase();
+		}
+		catch (IOException ioe)
+		{
+			throw new Error("Unable to create database");
+		}
+		catch(SQLException sqle)
+		{
+			throw sqle;
+		}
+		
+		serverIP = getResources().getString(R.string.server_ip);
 		
         // Getting Google Play availability status
         int status = GooglePlayServicesUtil.isGooglePlayServicesAvailable(getBaseContext());
@@ -106,6 +124,10 @@ public class MainActivity extends FragmentActivity
      
             // Zoom in the Google Map at a level where all (most) of Denmark will be visible
             gMap.animateCamera(CameraUpdateFactory.zoomTo(6));
+            
+            loadMarkersTask loader = new loadMarkersTask();
+            loader.execute(latLng);
+//            
         }
 		myDbHelper = new DataBaseHelper(this.getApplicationContext());
 		try 
@@ -166,16 +188,14 @@ public class MainActivity extends FragmentActivity
 		imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
 	}
 	
-	private LatLngBounds moveCameraToIcao(String icaoCode)
+	private void moveCameraToIcao(String icaoCode)
 	{
 		Log.i("airfields", "Start db load");
 		myDbHelper.openDataBase();
         LatLng mapCentre = myDbHelper.icaoToLatLng(icaoCode);
 	 	myDbHelper.close();
         gMap.moveCamera(CameraUpdateFactory.newLatLng(mapCentre));
-        LatLngBounds mapBounds = new LatLngBounds(new LatLng(mapCentre.latitude-3.0, mapCentre.longitude-(2.5/Math.cos(mapCentre.latitude*Math.PI/180))), new LatLng(mapCentre.latitude+3.0, mapCentre.longitude+(2.5/Math.cos(mapCentre.latitude*Math.PI/180))));
-        gMap.animateCamera(CameraUpdateFactory.newLatLngBounds(mapBounds, 0));
-        return mapBounds;
+
 	}
 	
 	private void showMetarText(JSONObject metarJson)
@@ -192,7 +212,6 @@ public class MainActivity extends FragmentActivity
 	
 	public void showMetar(View view)
 	{
-    	List<MarkerOptions> markersOpt;
     	Log.i("Test", "Hide OSD Keyboard");
 		hideOSDKeyboard(view);
 		EditText icaoText = (EditText) findViewById(R.id.edit_icao);
@@ -208,13 +227,9 @@ public class MainActivity extends FragmentActivity
     		return;
     	}
     	Log.i("Test", "Move Camera");
-		LatLngBounds mapBounds = moveCameraToIcao(icaoCode);
+		moveCameraToIcao(icaoCode);
 
-		myDbHelper.openDataBase();
-	 	ArrayList<Airfield> airfields = myDbHelper.airfieldsInArea(mapBounds);
-	 	myDbHelper.close();
-    	
-	 	//Replace with some background thread
+   		//Replace with some background thread
     	String readMetarFeed = readMetarFeed(icaoCode);
     	
     	try {
@@ -226,10 +241,7 @@ public class MainActivity extends FragmentActivity
 	    	//Show metar information in whitespace
 	    	Log.i("Test", "Show Metar Information");
 	    	showMetarText(jsonObject);
-	    	Log.i("Test", "Make list with markers");
-	    	markersOpt = makeListMarkersMetarInformation(airfields, mapBounds);
-	    	Log.i("Test", "Draw markers");
-	    	drawMapMarkers(markersOpt);
+
 	    	
         } catch (JSONException e) {        	
         	e.printStackTrace();
@@ -245,7 +257,7 @@ public class MainActivity extends FragmentActivity
 		}
 	}
 
-	private List<MarkerOptions> makeListMarkersMetarInformation(ArrayList<Airfield> airfields, LatLngBounds mapBounds)
+	private List<MarkerOptions> makeListMarkersMetarInformation(ArrayList<Airfield> airfields)
 	{
 		List<Marker> markers = new ArrayList<Marker>();
 
@@ -253,8 +265,7 @@ public class MainActivity extends FragmentActivity
 		String colour = "";
 		JSONObject metarJson = new JSONObject();
 		
-		Log.i("airfields", "Next airfield call, NE=" + mapBounds.northeast.toString());
-	 	int icon_state=R.drawable.icn_empty;
+		int icon_state=R.drawable.icn_empty;
                   
         for (int i=0; i<airfields.size();i++)
         {
@@ -381,4 +392,31 @@ public class MainActivity extends FragmentActivity
 		getMenuInflater().inflate(R.menu.activity_main, menu);
 		return true;
 	}
-}
+	
+	private class loadMarkersTask extends AsyncTask<LatLng, Void, List<MarkerOptions>> 
+	{
+
+		@Override
+		protected List<MarkerOptions> doInBackground(LatLng... params) {
+	    	List<MarkerOptions> markersOpt;
+	    	LatLng latLng = params[0];
+            LatLngBounds mapBounds = new LatLngBounds(new LatLng(latLng.latitude-3.0, latLng.longitude-(2.5/Math.cos(latLng.latitude*Math.PI/180))), new LatLng(latLng.latitude+3.0, latLng.longitude+(2.5/Math.cos(latLng.latitude*Math.PI/180))));
+          
+            myDbHelper.openDataBase();
+    	 	ArrayList<Airfield> airfields = myDbHelper.airfieldsInArea(mapBounds);
+    	 	myDbHelper.close();
+	    	Log.i("Test", "Make list with markers");
+	    	markersOpt = makeListMarkersMetarInformation(airfields);
+			return markersOpt;
+		}
+
+		@Override
+		protected void onPostExecute(List<MarkerOptions> result) {
+			// TODO Auto-generated method stub
+			super.onPostExecute(result);
+	    	Log.i("Test", "Draw markers");
+			drawMapMarkers(result);			
+		}		
+		
+	}
+}	
