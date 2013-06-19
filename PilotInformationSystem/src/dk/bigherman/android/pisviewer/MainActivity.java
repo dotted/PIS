@@ -72,11 +72,6 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
 	{
-		if (android.os.Build.VERSION.SDK_INT > 9) {
-			StrictMode.ThreadPolicy policy = 
-			        new StrictMode.ThreadPolicy.Builder().permitAll().build();
-			StrictMode.setThreadPolicy(policy);
-			}
 		
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
@@ -232,23 +227,8 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
     	Log.i("Test", "Move Camera");
 		moveCameraToIcao(icaoCode);
 
-   		//Replace with some background thread
-    	String readMetarFeed = readMetarFeed(icaoCode);
-    	
-    	try {
-	    	JSONObject jsonObject = new JSONObject(readMetarFeed);
-	    	
-	    	//Log.d(MainActivity.class.getName(), jsonObject.getString("icao"));
-	    	//Log.d(MainActivity.class.getName(), jsonObject.getString("time"));
-	    	//Log.d(MainActivity.class.getName(), jsonObject.getString("report"));
-	    	//Show metar information in whitespace
-	    	Log.i("Test", "Show Metar Information");
-	    	showMetarText(jsonObject);
-	    	
-        } catch (JSONException e) {        	
-        	e.printStackTrace();
-    		Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
-        }
+		updateMetarInfoTask update = new updateMetarInfoTask();
+		update.execute(icaoCode);
     } 
 	
 	private void drawMapMarkers(List<MarkerOptions> markersOpt)
@@ -372,15 +352,19 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 				break;
 			} catch (ClientProtocolException e) {
 				e.printStackTrace();
-				throw new RuntimeException(
-						"Error connecting to server - check IP address.  Use Settings menu to fix this");
+				tries--;
+
+//				throw new RuntimeException(
+//						"Error connecting to server - check IP address.  Use Settings menu to fix this");
 			} catch (ConnectTimeoutException e) {
 				e.printStackTrace();
 				tries--;
 			} catch (IOException e) {
 				e.printStackTrace();
-				throw new RuntimeException(
-						"Error connecting to server - check IP address.  Use Settings menu to fix this");
+				tries--;
+
+//				throw new RuntimeException(
+//						"Error connecting to server - check IP address.  Use Settings menu to fix this");
 			}
 		} while (tries <= 5);
 		return builder.toString();
@@ -419,6 +403,40 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 	    	Log.i("Test", "Draw markers");
 			drawMapMarkers(result);			
 		}		
+	}
+	
+	private class updateMetarInfoTask extends AsyncTask<String, Void, JSONObject>
+	{
+
+		@Override
+		protected JSONObject doInBackground(String... params) {
+			String icaoCode = params[0];
+			String readMetarFeed = readMetarFeed(icaoCode);
+			JSONObject metarJson = new JSONObject();
+	    	
+	    	try {
+		    	metarJson = new JSONObject(readMetarFeed);
+		    	
+		    	//Log.d(MainActivity.class.getName(), jsonObject.getString("icao"));
+		    	//Log.d(MainActivity.class.getName(), jsonObject.getString("time"));
+		    	//Log.d(MainActivity.class.getName(), jsonObject.getString("report"));
+		    	//Show metar information in whitespace
+
+		    	
+	        } catch (JSONException e) {        	
+	        	e.printStackTrace();
+	    		Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+	        }
+	    	return metarJson;
+		}
+
+		@Override
+		protected void onPostExecute(JSONObject result) {
+			// TODO Auto-generated method stub
+			super.onPostExecute(result);
+	    	Log.i("Test", "Show Metar Information");
+	    	showMetarText(result);
+		}
 		
 	}
 
