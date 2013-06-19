@@ -3,7 +3,6 @@ package dk.bigherman.android.pisviewer;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.StrictMode;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.view.Menu;
@@ -14,34 +13,16 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.conn.ConnectTimeoutException;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Loader;
 import android.database.SQLException;
-import android.os.Bundle;
 import android.util.Log;
 
 import android.support.v4.app.FragmentActivity;
@@ -230,7 +211,7 @@ public class MainActivity extends FragmentActivity
 		moveCameraToIcao(icaoCode);
 
    		//Replace with some background thread
-    	String readMetarFeed = readMetarFeed(icaoCode);
+    	String readMetarFeed = CommonMethods.getJson("http://" + serverIP + "/test_json.php?icao=" + icaoCode);
     	
     	try {
 	    	JSONObject jsonObject = new JSONObject(readMetarFeed);
@@ -269,7 +250,7 @@ public class MainActivity extends FragmentActivity
                   
         for (int i=0; i<airfields.size();i++)
         {
-        	String readMetarFeed = readMetarFeed(airfields.get(i).getIcaoCode());
+        	String readMetarFeed = CommonMethods.getJson("http://" + serverIP + "/test_json.php?icao=" + airfields.get(i).getIcaoCode());
         	Log.i("airfields", airfields.get(i).getIcaoCode());
         	
         	if(readMetarFeed != "")
@@ -324,66 +305,6 @@ public class MainActivity extends FragmentActivity
         }
         return markersOpt;		
 	}
-	
-	private String readMetarFeed(String icaoCode) 
-	{
-		int tries = 1;
-		int maxTries = 5;
-		//String metarURL = "http://duku.no-ip.info/pis/android/jason.php?i=" + icaoCode;
-
-		String metarURL = "http://" + serverIP + "/test_json.php?icao="
-				+ icaoCode;
-		StringBuilder builder = new StringBuilder();
-		HttpGet httpGet = new HttpGet(metarURL);
-		HttpParams httpParameters = new BasicHttpParams();
-		// Set the timeout in milliseconds until a connection is established.
-		// The default value is zero, that means the timeout is not used. 
-		int timeoutConnection = 5000;
-		HttpConnectionParams.setConnectionTimeout(httpParameters,
-				timeoutConnection);
-		// Set the default socket timeout (SO_TIMEOUT) 
-		// in milliseconds which is the timeout for waiting for data.
-		int timeoutSocket = 5000;
-		HttpConnectionParams
-				.setSoTimeout(httpParameters, timeoutSocket);
-		DefaultHttpClient client = new DefaultHttpClient(httpParameters);
-		client.setParams(httpParameters);
-		do {
-			try {
-				Log.i("Test", "This is try nr: " + tries);
-				HttpResponse response = client.execute(httpGet);
-				StatusLine statusLine = response.getStatusLine();
-				int statusCode = statusLine.getStatusCode();
-				if (statusCode == 200) {
-					HttpEntity entity = response.getEntity();
-					InputStream content = entity.getContent();
-					BufferedReader reader = new BufferedReader(
-							new InputStreamReader(content));
-					String line;
-					while ((line = reader.readLine()) != null) {
-						builder.append(line);
-					}
-				} else {
-					Log.e(MainActivity.class.toString(),
-							"Failed to download file");
-				}
-				break;
-			} catch (ClientProtocolException e) {
-				e.printStackTrace();
-				throw new RuntimeException(
-						"Error connecting to server - check IP address.  Use Settings menu to fix this");
-			} catch (ConnectTimeoutException e) {
-				e.printStackTrace();
-				tries--;
-			} catch (IOException e) {
-				e.printStackTrace();
-				throw new RuntimeException(
-						"Error connecting to server - check IP address.  Use Settings menu to fix this");
-			}
-		} while (tries <= 5);
-		return builder.toString();
-	}
-	
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu)
