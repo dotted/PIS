@@ -32,7 +32,7 @@ public final class CommonMethods
 		}
 		return false;
 	}
- 
+
 	public static boolean validateIcao(String icao, DataBaseHelper dbHelper)
 	{
 		String regexPattern = "^[A-Z]{4}$";
@@ -71,7 +71,7 @@ public final class CommonMethods
 		// in milliseconds which is the timeout for waiting for data.
 		int timeoutSocket = 5000;
 		HttpConnectionParams
-				.setSoTimeout(httpParameters, timeoutSocket);
+		.setSoTimeout(httpParameters, timeoutSocket);
 		DefaultHttpClient client = new DefaultHttpClient(httpParameters);
 		client.setParams(httpParameters);
 		do {

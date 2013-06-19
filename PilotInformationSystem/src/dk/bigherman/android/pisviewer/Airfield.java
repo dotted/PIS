@@ -8,7 +8,7 @@ public class Airfield
 	private int row;
 	private int col;
 	private String name;
-	
+
 	Airfield(String icao, double lat, double lng, String name)
 	{
 		this.icaoCode = icao;
@@ -16,22 +16,22 @@ public class Airfield
 		this.lng = lng;
 		this.name = name;
 	}
-	
+
 	public double getLat()
 	{
 		return lat;
 	}
-	
+
 	public double getLng()
 	{
 		return lng;
 	}
-	
+
 	public String getIcaoCode()
 	{
 		return icaoCode;
 	}
-	
+
 	public String getName()
 	{
 		return name;
