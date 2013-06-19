@@ -305,6 +305,7 @@ public class MainActivity extends FragmentActivity
 		}
 		return builder.toString();
 	}
+	
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu)
