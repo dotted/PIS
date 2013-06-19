@@ -65,7 +65,7 @@ public class MainActivity extends FragmentActivity
 		try 
 		{
 			// To do, rewrite it ALL
-			myDbHelper.createDataBase();
+			myDbHelper.createDataBaseIfNotExists();
 		}
 		catch (IOException ioe)
 		{
@@ -114,7 +114,7 @@ public class MainActivity extends FragmentActivity
 		try 
 		{
 			// To do, rewrite it ALL
-			myDbHelper.createDataBase();
+			myDbHelper.createDataBaseIfNotExists();
 		}
 		catch (IOException ioe)
 		{

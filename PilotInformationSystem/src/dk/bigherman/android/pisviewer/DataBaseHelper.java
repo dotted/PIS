@@ -43,7 +43,7 @@ public class DataBaseHelper extends SQLiteOpenHelper
 	     * Creates a empty database on the system and rewrites it with your own database.
 	     * 
 	    */
-	    public void createDataBase() throws IOException
+	    public void createDataBaseIfNotExists() throws IOException
 	    {
 	    	boolean dbExist = checkDataBase();
 	 
