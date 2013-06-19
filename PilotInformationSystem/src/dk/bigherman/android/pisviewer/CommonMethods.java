@@ -21,7 +21,9 @@ public final class CommonMethods
 		 Boolean regexFlag = validateIcaoWithRegex(icao, regexPattern);
 		 if (regexFlag)
 		 {
+			 dbHelper.openDataBase();
 			 Boolean dbFlag = dbHelper.validateIcaoWithDb(icao);
+			 dbHelper.close();
 			 if (dbFlag)
 			 {
 				 return true;

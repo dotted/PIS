@@ -108,7 +108,6 @@ public class MainActivity extends FragmentActivity
 		{
 			// To do, rewrite it ALL
 			myDbHelper.createDataBase();
-			myDbHelper.openDataBase();
 		}
 		catch (IOException ioe)
 		{
@@ -176,7 +175,7 @@ public class MainActivity extends FragmentActivity
 		    	Toast.makeText(getApplicationContext(), "Invalid ICAO code", Toast.LENGTH_LONG).show();
 	    		return;
 	    	}
-	    	
+			myDbHelper.openDataBase();
             LatLng mapCentre = myDbHelper.icaoToLatLng(icaoCode);
             gMap.moveCamera(CameraUpdateFactory.newLatLng(mapCentre));
             LatLngBounds mapBounds = new LatLngBounds(new LatLng(mapCentre.latitude-3.0, mapCentre.longitude-(2.5/Math.cos(mapCentre.latitude*Math.PI/180))), new LatLng(mapCentre.latitude+3.0, mapCentre.longitude+(2.5/Math.cos(mapCentre.latitude*Math.PI/180))));
