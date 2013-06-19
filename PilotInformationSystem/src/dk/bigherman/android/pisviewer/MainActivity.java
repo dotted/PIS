@@ -14,8 +14,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.lang.System;
 import java.util.ArrayList;
+import java.util.Currency;
 import java.util.List;
+
+import javax.net.ssl.TrustManagerFactorySpi;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,11 +45,13 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import dk.bigherman.android.pisviewer.Airfield;
 import dk.bigherman.android.pisviewer.DataBaseHelper;
 
-public class MainActivity extends FragmentActivity 
+public class MainActivity extends FragmentActivity
 {
 	GoogleMap gMap;
 	String serverIP = "";
 	DataBaseHelper myDbHelper;
+	long airfieldsColourCodesTimestamp = 0;
+	JSONObject airfieldsColourCodes = null;
 	//private enum Colour{BLU, WHT, GRN, YLO, AMB, RED, BLK, NIL};
 
 
@@ -163,6 +169,23 @@ public class MainActivity extends FragmentActivity
 		return true;
 	}
 
+	private JSONObject getAirfieldsColourCodes()
+	{
+		String jsonString = CommonMethods.getJson("http://" + serverIP + "/test_json.php?getColourCodes");
+
+		// Only refresh data every hour
+		if (System.currentTimeMillis() > airfieldsColourCodesTimestamp+3600000)
+		{
+			try {
+				airfieldsColourCodes = new JSONObject(jsonString);
+				airfieldsColourCodesTimestamp = System.currentTimeMillis();
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return airfieldsColourCodes;
+	}
+
 	private void hideOSDKeyboard(View view)
 	{
 		InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -176,7 +199,6 @@ public class MainActivity extends FragmentActivity
 		LatLng mapCentre = myDbHelper.icaoToLatLng(icaoCode);
 		myDbHelper.close();
 		gMap.moveCamera(CameraUpdateFactory.newLatLng(mapCentre));
-
 	}
 
 	private void showMetarText(JSONObject metarJson)
@@ -222,8 +244,6 @@ public class MainActivity extends FragmentActivity
 			//Show metar information in whitespace
 			Log.i("Test", "Show Metar Information");
 			showMetarText(jsonObject);
-
-
 		} catch (JSONException e) {        	
 			e.printStackTrace();
 			Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
@@ -248,60 +268,48 @@ public class MainActivity extends FragmentActivity
 
 		int icon_state=R.drawable.icn_empty;
 
-		for (int i=0; i<airfields.size();i++)
-		{
-			String readMetarFeed = CommonMethods.getJson("http://" + serverIP + "/test_json.php?icao=" + airfields.get(i).getIcaoCode());
-			Log.i("airfields", airfields.get(i).getIcaoCode());
-
-			if(readMetarFeed != "")
-			{
-				Log.i("airfields", readMetarFeed);
-
-				try {
-					metarJson = new JSONObject(readMetarFeed);
-					colour = metarJson.getString("colour");
-				} catch (JSONException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				if (colour.contentEquals("BLU"))
-				{
-					icon_state=R.drawable.icn_blue;
-				}
-				else if (colour.contentEquals("WHT"))
-				{
-					icon_state=R.drawable.icn_white;
-				}
-				else if (colour.contentEquals("GRN"))
-				{
-					icon_state=R.drawable.icn_green;
-				}
-				else if (colour.contentEquals("YLO"))
-				{
-					icon_state=R.drawable.icn_yellow;
-				}
-				else if (colour.contentEquals("AMB"))
-				{
-					icon_state=R.drawable.icn_amber;
-				}
-				else if (colour.contentEquals("RED"))
-				{
-					icon_state=R.drawable.icn_red;
-				}
-				else if (colour.contentEquals("NIL"))
-				{
-					icon_state=R.drawable.icn_empty;
-				}
-			}
+		for (Airfield airfield : airfields) {
+			// Fuck java, why must I do this twice?
 			try {
-				markersOpt.add(new MarkerOptions().position(new LatLng(airfields.get(i).getLat(), airfields.get(i).getLng()))
-						.title(airfields.get(i).getName())
-						.snippet(metarJson.getString("report"))
-						.icon(BitmapDescriptorFactory.fromResource(icon_state)));
+				colour = getAirfieldsColourCodes().getString(
+						airfield.getIcaoCode());
 			} catch (JSONException e) {
-				// TODO Auto-generated catch block
+				// TODO: handle exception
 				e.printStackTrace();
 			}
+			if (colour.contentEquals("BLU"))
+			{
+				icon_state=R.drawable.icn_blue;
+			}
+			else if (colour.contentEquals("WHT"))
+			{
+				icon_state=R.drawable.icn_white;
+			}
+			else if (colour.contentEquals("GRN"))
+			{
+				icon_state=R.drawable.icn_green;
+			}
+			else if (colour.contentEquals("YLO"))
+			{
+				icon_state=R.drawable.icn_yellow;
+			}
+			else if (colour.contentEquals("AMB"))
+			{
+				icon_state=R.drawable.icn_amber;
+			}
+			else if (colour.contentEquals("RED"))
+			{
+				icon_state=R.drawable.icn_red;
+			}
+			else if (colour.contentEquals("NIL"))
+			{
+				icon_state=R.drawable.icn_empty;
+			}
+
+			markersOpt.add(new MarkerOptions().position(new LatLng(airfield.getLat(), airfield.getLng()))
+					.title(airfield.getName())
+					//.snippet(metarJson.getString("report"))
+					.icon(BitmapDescriptorFactory.fromResource(icon_state)));
 		}
 		return markersOpt;		
 	}
