@@ -52,7 +52,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 {
 	GoogleMap googleMap;
 	String serverIp = "";
-	DataBaseHelper databaseHelper;
+	DataBaseHelper database;
 	long airfieldsColourCodesTimestamp = 0;
 	JSONObject airfieldsColourCodes = null;
 
@@ -62,12 +62,12 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		databaseHelper = new DataBaseHelper(this.getApplicationContext());
+		database = new DataBaseHelper(this.getApplicationContext());
 		
-		if (!databaseHelper.isCreated())
+		if (!database.isCreated())
 		{
 			try {
-				databaseHelper.create();
+				database.create();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -78,7 +78,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		try 
 		{
 			// To do, rewrite it ALL
-			databaseHelper.create();
+			database.create();
 		}
 		catch (IOException ioe)
 		{
@@ -126,11 +126,11 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 			loader.execute(latLng);
 			//            
 		}
-		databaseHelper = new DataBaseHelper(this.getApplicationContext());
+		database = new DataBaseHelper(this.getApplicationContext());
 		try 
 		{
 			// To do, rewrite it ALL
-			databaseHelper.create();
+			database.create();
 		}
 		catch (IOException ioe)
 		{
@@ -204,9 +204,9 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 	private void moveCameraToIcao(String icaoCode)
 	{
 		Log.i("airfields", "Start db load");
-		databaseHelper.open();
-		LatLng mapCentre = databaseHelper.icaoToLatLng(icaoCode);
-		databaseHelper.close();
+		database.open();
+		LatLng mapCentre = database.icaoToLatLng(icaoCode);
+		database.close();
 		googleMap.moveCamera(CameraUpdateFactory.newLatLng(mapCentre));
 	}
 
@@ -231,7 +231,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 
 		//Validate ICAO code.
 		Log.i("Test", "Validate ICAO");
-		boolean flag = CommonMethods.validateIcao(icaoCode, databaseHelper);
+		boolean flag = CommonMethods.validateIcao(icaoCode, database);
 		// If invalid show error message and return
 		if (!flag)
 		{
@@ -323,9 +323,9 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 			LatLng latLng = params[0];
 			LatLngBounds mapBounds = new LatLngBounds(new LatLng(latLng.latitude-3.0, latLng.longitude-(2.5/Math.cos(latLng.latitude*Math.PI/180))), new LatLng(latLng.latitude+3.0, latLng.longitude+(2.5/Math.cos(latLng.latitude*Math.PI/180))));
 
-			databaseHelper.open();
-			ArrayList<Airfield> airfields = databaseHelper.airfieldsInArea(mapBounds);
-			databaseHelper.close();
+			database.open();
+			ArrayList<Airfield> airfields = database.airfieldsInArea(mapBounds);
+			database.close();
 			Log.i("Test", "Make list with markers");
 
 			return makeListMarkersMetarInformation(airfields);
