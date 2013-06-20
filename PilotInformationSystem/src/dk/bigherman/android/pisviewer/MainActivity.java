@@ -86,7 +86,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		int status = GooglePlayServicesUtil.isGooglePlayServicesAvailable(getBaseContext());
 
 		// Showing status
-		if(status!=ConnectionResult.SUCCESS)
+		if(status != ConnectionResult.SUCCESS)
 		{ 	// Google Play Services are not available
 
 			int requestCode = 10;
@@ -178,7 +178,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 
 	private void moveCameraToIcao(String icaoCode)
 	{
-		Log.i("airfields", "Start db load");
+		Log.i("moveCameraToIcao", "Start db load");
 		database.open();
 		LatLng mapCentre = database.icaoToLatLng(icaoCode);
 		database.close();
@@ -199,13 +199,13 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 
 	public void showMetar(View view)
 	{
-		Log.i("Test", "Hide OSD Keyboard");
+		Log.i("showMetar", "Hide OSD Keyboard");
 		hideOSDKeyboard(view);
 		EditText icaoText = (EditText) findViewById(R.id.edit_icao);
 		String icaoCode = icaoText.getText().toString().toUpperCase();
 
 		//Validate ICAO code.
-		Log.i("Test", "Validate ICAO");
+		Log.i("showMetar", "Validate ICAO");
 		boolean flag = CommonMethods.validateIcao(icaoCode, database);
 		// If invalid show error message and return
 		if (!flag)
@@ -213,7 +213,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 			Toast.makeText(getApplicationContext(), "Invalid ICAO code", Toast.LENGTH_LONG).show();
 			return;
 		}
-		Log.i("Test", "Move Camera");
+		Log.i("showMetar", "Move Camera");
 		moveCameraToIcao(icaoCode);
 
 		updateMetarInfoTask update = new updateMetarInfoTask();
@@ -301,7 +301,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 			database.open();
 			ArrayList<Airfield> airfields = database.airfieldsInArea(mapBounds);
 			database.close();
-			Log.i("Test", "Make list with markers");
+			Log.i("loadMarkersTask", "doInBackground");
 
 			return makeListMarkersMetarInformation(airfields);
 		}
@@ -310,7 +310,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		protected void onPostExecute(List<MarkerOptions> result) {
 			// TODO Auto-generated method stub
 			super.onPostExecute(result);
-			Log.i("Test", "Draw markers");
+			Log.i("loadMarkersTask", "Draw markers");
 			drawMapMarkers(result);			
 		}		
 	}
@@ -344,27 +344,27 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		protected void onPostExecute(JSONObject result) {
 			// TODO Auto-generated method stub
 			super.onPostExecute(result);
-			Log.i("Test", "Show Metar Information");
+			Log.i("updateMetarInfoTask", "showMetarText");
 			showMetarText(result);
 		}
 
 	}
 	
 	@Override
-	public void onCameraChange(CameraPosition arg0) {
+	public void onCameraChange(CameraPosition cameraPosition) {
 		// TODO Auto-generated method stub'
-		Log.i("Test", "Location changed");
-		LatLng latLng = arg0.target;
+		Log.i("onCameraChange", "Location changed");
+		LatLng latLng = cameraPosition.target;
 
 		loadMarkersTask loader = new loadMarkersTask();
 		loader.execute(latLng);
 	}
 
 	@Override
-	public boolean onMarkerClick(Marker arg0) {
+	public boolean onMarkerClick(Marker marker) {
 		
 		updateMetarInfoTask updater = new updateMetarInfoTask();
-		String title = arg0.getTitle();
+		String title = marker.getTitle();
 		updater.execute(title);
 		// TODO Auto-generated method stub
 		return false;

@@ -58,7 +58,7 @@ public class DataBaseHelper extends SQLiteOpenHelper
 			throw new Error("Error copying database");
 		}
 	}
-	
+
 	/**
 	 * Check if the database already exist to avoid re-copying the file each time you open the application.
 	 * @return true if it exists, false if it doesn't
@@ -76,12 +76,12 @@ public class DataBaseHelper extends SQLiteOpenHelper
 	public boolean isCreated(String databasePath)
 	{
 		Log.i("isCreated(" + dbPath + dbName + ")", "woop");
-		
+
 		SQLiteDatabase database = null;
 
 		try
 		{
-			database = SQLiteDatabase.openDatabase(databasePath, null, SQLiteDatabase.OPEN_READONLY);
+			database = open(databasePath);
 			database.close();
 		}
 		catch(SQLiteException e)
@@ -109,7 +109,7 @@ public class DataBaseHelper extends SQLiteOpenHelper
 	{
 		//Open your local db as the input stream
 		InputStream input = context.getAssets().open(inputFilename);
-		
+
 		//Open the empty db as the output stream
 		OutputStream output = new FileOutputStream(outputFilepath);
 
@@ -129,16 +129,16 @@ public class DataBaseHelper extends SQLiteOpenHelper
 
 	public void open() throws SQLException
 	{
-		open(dbPath + dbName);
+			database = open(dbPath + dbName);
 	}
-	
-	public void open(String databaseFilepath) throws SQLException
+
+	public SQLiteDatabase open(String databaseFilepath) throws SQLException
 	{
 		//Open the database
-		database = SQLiteDatabase.openDatabase(databaseFilepath, null, SQLiteDatabase.OPEN_READONLY);
+		return SQLiteDatabase.openDatabase(databaseFilepath, null, SQLiteDatabase.OPEN_READONLY);
 	}
-	
-	
+
+
 
 	@Override
 	public void close()
@@ -172,12 +172,12 @@ public class DataBaseHelper extends SQLiteOpenHelper
 	{
 		String airfieldName;
 
-		Cursor myCursor = database.rawQuery("SELECT name FROM airfields WHERE icao ='" + icaoCode +"'", null);
+		Cursor cursor = query("SELECT name FROM airfields WHERE icao ='" + icaoCode +"'", null);
 
-		myCursor.moveToFirst();
-		airfieldName = myCursor.getString(0);
+		cursor.moveToFirst();
+		airfieldName = cursor.getString(0);
 
-		myCursor.close();
+		cursor.close();
 
 		return airfieldName;
 	}
@@ -186,10 +186,10 @@ public class DataBaseHelper extends SQLiteOpenHelper
 	{
 		LatLng latLng;
 
-		Cursor myCursor = database.rawQuery("SELECT lat, long FROM airfields WHERE icao ='" + icaoCode +"'", null);
-		myCursor.moveToFirst();
+		Cursor cursor = query("SELECT lat, long FROM airfields WHERE icao ='" + icaoCode +"'", null);
+		cursor.moveToFirst();
 
-		latLng = new LatLng(myCursor.getFloat(0), myCursor.getFloat(1));
+		latLng = new LatLng(cursor.getFloat(0), cursor.getFloat(1));
 
 		return latLng;
 	}
@@ -199,21 +199,17 @@ public class DataBaseHelper extends SQLiteOpenHelper
 		ArrayList<Airfield> airfieldsInArea = new ArrayList<Airfield>();
 		Airfield airfield;
 
-		Log.i("airfieldsInArea", "SELECT icao, lat, long, name FROM airfields "
-				+ "WHERE lat >=" + mapBounds.southwest.latitude +" AND lat<=" + mapBounds.northeast.latitude + " AND long>=" + mapBounds.southwest.longitude + " AND long<=" + mapBounds.northeast.longitude);
+		Cursor cursor = query("SELECT icao, lat, long, name FROM airfields " + "WHERE lat >=" + mapBounds.southwest.latitude +" AND lat<=" + mapBounds.northeast.latitude + " AND long>=" + mapBounds.southwest.longitude + " AND long<=" + mapBounds.northeast.longitude, null);
 
-		Cursor myCursor = database.rawQuery("SELECT icao, lat, long, name FROM airfields "
-				+ "WHERE lat >=" + mapBounds.southwest.latitude +" AND lat<=" + mapBounds.northeast.latitude + " AND long>=" + mapBounds.southwest.longitude + " AND long<=" + mapBounds.northeast.longitude, null);
+		cursor.moveToNext();
 
-		myCursor.moveToNext();
-
-		while (!myCursor.isAfterLast()) {
-			airfield = new Airfield (myCursor.getString(0), myCursor.getDouble(1), myCursor.getDouble(2), myCursor.getString(3));
+		while (!cursor.isAfterLast()) {
+			airfield = new Airfield (cursor.getString(0), cursor.getDouble(1), cursor.getDouble(2), cursor.getString(3));
 			airfieldsInArea.add(airfield);
-			myCursor.moveToNext();
+			cursor.moveToNext();
 		}
 
-		myCursor.close();
+		cursor.close();
 
 		Log.i("airfieldsInArea", "Rows: " + airfieldsInArea.size());
 
@@ -222,10 +218,21 @@ public class DataBaseHelper extends SQLiteOpenHelper
 
 	public boolean validateIcaoWithDb(String icao)
 	{
-		Log.i("validateIcao", "SELECT icao FROM airfields WHERE icao = '" + icao + "'");
-		Cursor myCursor = database.rawQuery("SELECT icao FROM airfields WHERE icao = '" + icao + "'", null);
-		if (myCursor.getCount() > 0)
+		Cursor cursor = query("SELECT icao FROM airfields WHERE icao = '" + icao + "'", null);	
+		if (cursor.getCount() > 0)
 			return true;
 		return false;
+	}
+
+	public Cursor query(String sql, String[] selectionArgs)
+	{
+		Log.i("sqlStatement", sql);
+		if (database != null)
+		{
+			Cursor cursor = database.rawQuery(sql, selectionArgs);
+			return cursor;
+		}
+		else
+			throw new SQLException("Database not open");
 	}
 }

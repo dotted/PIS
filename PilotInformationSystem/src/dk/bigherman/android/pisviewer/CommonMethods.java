@@ -70,7 +70,7 @@ public final class CommonMethods
 		client.setParams(httpParameters);
 		do {
 			try {
-				Log.i("Test", "This is try nr: " + tries);
+				Log.i("getJson", "download attempt #" + tries);
 				HttpResponse response = client.execute(httpGet);
 				StatusLine statusLine = response.getStatusLine();
 				int statusCode = statusLine.getStatusCode();
