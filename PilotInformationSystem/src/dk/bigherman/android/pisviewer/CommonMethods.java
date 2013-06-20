@@ -38,7 +38,7 @@ public final class CommonMethods
 		Boolean icaoIsValiated = false;
 		if (validateStringWithRegex(icao, "^[A-Z]{4}$"))
 		{
-			dbHelper.openDataBase();
+			dbHelper.open();
 			icaoIsValiated = dbHelper.validateIcaoWithDb(icao);
 			dbHelper.close();
 		}

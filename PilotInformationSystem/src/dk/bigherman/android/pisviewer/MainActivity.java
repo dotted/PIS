@@ -50,25 +50,35 @@ import dk.bigherman.android.pisviewer.DataBaseHelper;
 
 public class MainActivity extends FragmentActivity implements OnCameraChangeListener, OnMarkerClickListener 
 {
-	GoogleMap gMap;
-	String serverIP = "";
-	DataBaseHelper myDbHelper;
+	GoogleMap googleMap;
+	String serverIp = "";
+	DataBaseHelper databaseHelper;
 	long airfieldsColourCodesTimestamp = 0;
 	JSONObject airfieldsColourCodes = null;
-	//private enum Colour{BLU, WHT, GRN, YLO, AMB, RED, BLK, NIL};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
 	{
-
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		myDbHelper = new DataBaseHelper(this.getApplicationContext());
+		databaseHelper = new DataBaseHelper(this.getApplicationContext());
+		
+		if (!databaseHelper.isCreated())
+		{
+			try {
+				databaseHelper.create();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		
 		try 
 		{
 			// To do, rewrite it ALL
-			myDbHelper.createDataBaseIfNotExists();
+			databaseHelper.create();
 		}
 		catch (IOException ioe)
 		{
@@ -79,7 +89,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 			throw sqle;
 		}
 
-		serverIP = getResources().getString(R.string.server_ip);
+		serverIp = getResources().getString(R.string.server_ip);
 
 		// Getting Google Play availability status
 		int status = GooglePlayServicesUtil.isGooglePlayServicesAvailable(getBaseContext());
@@ -99,28 +109,28 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 
 			// Getting reference to the SupportMapFragment of activity_main.xml
 			SupportMapFragment fm = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-			gMap = fm.getMap();
+			googleMap = fm.getMap();
 			// Creating a LatLng object for the current location (somewhere near Aarhus! :-))
 			LatLng latLng = new LatLng(56.0, 10.3);
 
 			// Showing the current location in Google Map
-			gMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+			googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
 
 			// Zoom in the Google Map at a level where all (most) of Denmark will be visible
-			gMap.animateCamera(CameraUpdateFactory.zoomTo(6));
+			googleMap.animateCamera(CameraUpdateFactory.zoomTo(6));
 
-			gMap.setOnCameraChangeListener(this);
-			gMap.setOnMarkerClickListener(this);
+			googleMap.setOnCameraChangeListener(this);
+			googleMap.setOnMarkerClickListener(this);
 
 			loadMarkersTask loader = new loadMarkersTask();
 			loader.execute(latLng);
 			//            
 		}
-		myDbHelper = new DataBaseHelper(this.getApplicationContext());
+		databaseHelper = new DataBaseHelper(this.getApplicationContext());
 		try 
 		{
 			// To do, rewrite it ALL
-			myDbHelper.createDataBaseIfNotExists();
+			databaseHelper.create();
 		}
 		catch (IOException ioe)
 		{
@@ -131,7 +141,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 			throw sqle;
 		}
 
-		serverIP = getResources().getString(R.string.server_ip);
+		serverIp = getResources().getString(R.string.server_ip);
 	}
 
 	public boolean onOptionsItemSelected (MenuItem item)
@@ -152,7 +162,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 				{
 					String value = input.getText().toString().trim();
 					//Toast.makeText(getApplicationContext(), value, Toast.LENGTH_SHORT).show();
-					serverIP = value;
+					serverIp = value;
 				}
 			});
 
@@ -174,7 +184,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		// Only refresh data every hour
 		if (System.currentTimeMillis() > airfieldsColourCodesTimestamp+3600000)
 		{
-			String jsonString = CommonMethods.getJson("http://" + serverIP + "/test_json.php?getColourCodes");
+			String jsonString = CommonMethods.getJson("http://" + serverIp + "/test_json.php?getColourCodes");
 			try {
 				airfieldsColourCodes = new JSONObject(jsonString);
 				airfieldsColourCodesTimestamp = System.currentTimeMillis();
@@ -194,10 +204,10 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 	private void moveCameraToIcao(String icaoCode)
 	{
 		Log.i("airfields", "Start db load");
-		myDbHelper.openDataBase();
-		LatLng mapCentre = myDbHelper.icaoToLatLng(icaoCode);
-		myDbHelper.close();
-		gMap.moveCamera(CameraUpdateFactory.newLatLng(mapCentre));
+		databaseHelper.open();
+		LatLng mapCentre = databaseHelper.icaoToLatLng(icaoCode);
+		databaseHelper.close();
+		googleMap.moveCamera(CameraUpdateFactory.newLatLng(mapCentre));
 	}
 
 	private void showMetarText(JSONObject metarJson)
@@ -221,7 +231,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 
 		//Validate ICAO code.
 		Log.i("Test", "Validate ICAO");
-		boolean flag = CommonMethods.validateIcao(icaoCode, myDbHelper);
+		boolean flag = CommonMethods.validateIcao(icaoCode, databaseHelper);
 		// If invalid show error message and return
 		if (!flag)
 		{
@@ -239,7 +249,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 	{
 		for (MarkerOptions markerOpt : markersOpt) 
 		{
-			gMap.addMarker(markerOpt);
+			googleMap.addMarker(markerOpt);
 		}
 	}
 
@@ -313,9 +323,9 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 			LatLng latLng = params[0];
 			LatLngBounds mapBounds = new LatLngBounds(new LatLng(latLng.latitude-3.0, latLng.longitude-(2.5/Math.cos(latLng.latitude*Math.PI/180))), new LatLng(latLng.latitude+3.0, latLng.longitude+(2.5/Math.cos(latLng.latitude*Math.PI/180))));
 
-			myDbHelper.openDataBase();
-			ArrayList<Airfield> airfields = myDbHelper.airfieldsInArea(mapBounds);
-			myDbHelper.close();
+			databaseHelper.open();
+			ArrayList<Airfield> airfields = databaseHelper.airfieldsInArea(mapBounds);
+			databaseHelper.close();
 			Log.i("Test", "Make list with markers");
 
 			return makeListMarkersMetarInformation(airfields);
@@ -336,7 +346,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		@Override
 		protected JSONObject doInBackground(String... params) {
 			String icaoCode = params[0];
-			String readMetarFeed = CommonMethods.getJson("http://" + serverIP + "/test_json.php?icao=" + icaoCode);
+			String readMetarFeed = CommonMethods.getJson("http://" + serverIp + "/test_json.php?icao=" + icaoCode);
 			JSONObject metarJson = new JSONObject();
 
 			try {
