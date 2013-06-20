@@ -35,8 +35,10 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
@@ -45,7 +47,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import dk.bigherman.android.pisviewer.Airfield;
 import dk.bigherman.android.pisviewer.DataBaseHelper;
 
-public class MainActivity extends FragmentActivity
+public class MainActivity extends FragmentActivity implements OnCameraChangeListener 
 {
 	GoogleMap gMap;
 	String serverIP = "";
@@ -54,15 +56,9 @@ public class MainActivity extends FragmentActivity
 	JSONObject airfieldsColourCodes = null;
 	//private enum Colour{BLU, WHT, GRN, YLO, AMB, RED, BLK, NIL};
 
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
 	{
-		if (android.os.Build.VERSION.SDK_INT > 9) {
-			StrictMode.ThreadPolicy policy = 
-					new StrictMode.ThreadPolicy.Builder().permitAll().build();
-			StrictMode.setThreadPolicy(policy);
-		}
 
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
@@ -111,6 +107,8 @@ public class MainActivity extends FragmentActivity
 
 			// Zoom in the Google Map at a level where all (most) of Denmark will be visible
 			gMap.animateCamera(CameraUpdateFactory.zoomTo(6));
+
+			gMap.setOnCameraChangeListener(this);
 
 			loadMarkersTask loader = new loadMarkersTask();
 			loader.execute(latLng);
@@ -171,11 +169,10 @@ public class MainActivity extends FragmentActivity
 
 	private JSONObject getAirfieldsColourCodes()
 	{
-		String jsonString = CommonMethods.getJson("http://" + serverIP + "/test_json.php?getColourCodes");
-
 		// Only refresh data every hour
 		if (System.currentTimeMillis() > airfieldsColourCodesTimestamp+3600000)
 		{
+			String jsonString = CommonMethods.getJson("http://" + serverIP + "/test_json.php?getColourCodes");
 			try {
 				airfieldsColourCodes = new JSONObject(jsonString);
 				airfieldsColourCodesTimestamp = System.currentTimeMillis();
@@ -232,22 +229,8 @@ public class MainActivity extends FragmentActivity
 		Log.i("Test", "Move Camera");
 		moveCameraToIcao(icaoCode);
 
-		//Replace with some background thread
-		String readMetarFeed = CommonMethods.getJson("http://" + serverIP + "/test_json.php?icao=" + icaoCode);
-
-		try {
-			JSONObject jsonObject = new JSONObject(readMetarFeed);
-
-			//Log.d(MainActivity.class.getName(), jsonObject.getString("icao"));
-			//Log.d(MainActivity.class.getName(), jsonObject.getString("time"));
-			//Log.d(MainActivity.class.getName(), jsonObject.getString("report"));
-			//Show metar information in whitespace
-			Log.i("Test", "Show Metar Information");
-			showMetarText(jsonObject);
-		} catch (JSONException e) {        	
-			e.printStackTrace();
-			Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
-		}
+		updateMetarInfoTask update = new updateMetarInfoTask();
+		update.execute(icaoCode);
 	} 
 
 	private void drawMapMarkers(List<MarkerOptions> markersOpt)
@@ -260,11 +243,8 @@ public class MainActivity extends FragmentActivity
 
 	private List<MarkerOptions> makeListMarkersMetarInformation(ArrayList<Airfield> airfields)
 	{
-		List<Marker> markers = new ArrayList<Marker>();
-
 		List<MarkerOptions> markersOpt = new ArrayList<MarkerOptions>();
 		String colour = "";
-		JSONObject metarJson = new JSONObject();
 
 		int icon_state=R.drawable.icn_empty;
 
@@ -275,8 +255,9 @@ public class MainActivity extends FragmentActivity
 						airfield.getIcaoCode());
 			} catch (JSONException e) {
 				// TODO: handle exception
-				e.printStackTrace();
+				Log.i("jsonError", e.getMessage());
 			}
+			
 			if (colour.contentEquals("BLU"))
 			{
 				icon_state=R.drawable.icn_blue;
@@ -327,7 +308,6 @@ public class MainActivity extends FragmentActivity
 
 		@Override
 		protected List<MarkerOptions> doInBackground(LatLng... params) {
-			List<MarkerOptions> markersOpt;
 			LatLng latLng = params[0];
 			LatLngBounds mapBounds = new LatLngBounds(new LatLng(latLng.latitude-3.0, latLng.longitude-(2.5/Math.cos(latLng.latitude*Math.PI/180))), new LatLng(latLng.latitude+3.0, latLng.longitude+(2.5/Math.cos(latLng.latitude*Math.PI/180))));
 
@@ -335,8 +315,8 @@ public class MainActivity extends FragmentActivity
 			ArrayList<Airfield> airfields = myDbHelper.airfieldsInArea(mapBounds);
 			myDbHelper.close();
 			Log.i("Test", "Make list with markers");
-			markersOpt = makeListMarkersMetarInformation(airfields);
-			return markersOpt;
+
+			return makeListMarkersMetarInformation(airfields);
 		}
 
 		@Override
@@ -346,6 +326,49 @@ public class MainActivity extends FragmentActivity
 			Log.i("Test", "Draw markers");
 			drawMapMarkers(result);			
 		}		
+	}
 
+	private class updateMetarInfoTask extends AsyncTask<String, Void, JSONObject>
+	{
+		@Override
+		protected JSONObject doInBackground(String... params) {
+			String icaoCode = params[0];
+			String readMetarFeed = CommonMethods.getJson("http://" + serverIP + "/test_json.php?icao=" + icaoCode);
+			JSONObject metarJson = new JSONObject();
+
+			try {
+				metarJson = new JSONObject(readMetarFeed);
+
+				//Log.d(MainActivity.class.getName(), jsonObject.getString("icao"));
+				//Log.d(MainActivity.class.getName(), jsonObject.getString("time"));
+				//Log.d(MainActivity.class.getName(), jsonObject.getString("report"));
+				//Show metar information in whitespace
+
+
+			} catch (JSONException e) {        	
+				e.printStackTrace();
+				Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+			}
+			return metarJson;
+		}
+
+		@Override
+		protected void onPostExecute(JSONObject result) {
+			// TODO Auto-generated method stub
+			super.onPostExecute(result);
+			Log.i("Test", "Show Metar Information");
+			showMetarText(result);
+		}
+
+	}
+
+	@Override
+	public void onCameraChange(CameraPosition arg0) {
+		// TODO Auto-generated method stub'
+		Log.i("Test", "Location changed");
+		LatLng latLng = arg0.target;
+
+		loadMarkersTask loader = new loadMarkersTask();
+		loader.execute(latLng);
 	}
 }	
