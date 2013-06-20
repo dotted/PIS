@@ -8,6 +8,7 @@ import android.app.Dialog;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -60,8 +61,10 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 	protected void onCreate(Bundle savedInstanceState) 
 	{
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
+		setContentView(R.layout.activity_main);
+	
 		database = new DataBaseHelper(this.getApplicationContext());
 		
 		if (!database.isCreated())
@@ -294,6 +297,13 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 	{
 
 		@Override
+		protected void onPreExecute() {
+			// TODO Auto-generated method stub
+			super.onPreExecute();
+			MainActivity.this.setProgressBarIndeterminateVisibility(true);
+		}
+
+		@Override
 		protected List<MarkerOptions> doInBackground(LatLng... params) {
 			LatLng latLng = params[0];
 			LatLngBounds mapBounds = new LatLngBounds(new LatLng(latLng.latitude-3.0, latLng.longitude-(2.5/Math.cos(latLng.latitude*Math.PI/180))), new LatLng(latLng.latitude+3.0, latLng.longitude+(2.5/Math.cos(latLng.latitude*Math.PI/180))));
@@ -310,6 +320,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		protected void onPostExecute(List<MarkerOptions> result) {
 			// TODO Auto-generated method stub
 			super.onPostExecute(result);
+			MainActivity.this.setProgressBarIndeterminateVisibility(false);
 			Log.i("Test", "Draw markers");
 			drawMapMarkers(result);			
 		}		
