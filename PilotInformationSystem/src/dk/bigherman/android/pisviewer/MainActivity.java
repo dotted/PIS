@@ -36,6 +36,7 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -47,7 +48,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import dk.bigherman.android.pisviewer.Airfield;
 import dk.bigherman.android.pisviewer.DataBaseHelper;
 
-public class MainActivity extends FragmentActivity implements OnCameraChangeListener 
+public class MainActivity extends FragmentActivity implements OnCameraChangeListener, OnMarkerClickListener 
 {
 	GoogleMap gMap;
 	String serverIP = "";
@@ -109,6 +110,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 			gMap.animateCamera(CameraUpdateFactory.zoomTo(6));
 
 			gMap.setOnCameraChangeListener(this);
+			gMap.setOnMarkerClickListener(this);
 
 			loadMarkersTask loader = new loadMarkersTask();
 			loader.execute(latLng);
@@ -288,7 +290,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 			}
 
 			markersOpt.add(new MarkerOptions().position(new LatLng(airfield.getLat(), airfield.getLng()))
-					.title(airfield.getName())
+					.title(airfield.getIcaoCode())
 					//.snippet(metarJson.getString("report"))
 					.icon(BitmapDescriptorFactory.fromResource(icon_state)));
 		}
@@ -330,6 +332,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 
 	private class updateMetarInfoTask extends AsyncTask<String, Void, JSONObject>
 	{
+
 		@Override
 		protected JSONObject doInBackground(String... params) {
 			String icaoCode = params[0];
@@ -347,7 +350,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 
 			} catch (JSONException e) {        	
 				e.printStackTrace();
-				Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+//				Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
 			}
 			return metarJson;
 		}
@@ -361,7 +364,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		}
 
 	}
-
+	
 	@Override
 	public void onCameraChange(CameraPosition arg0) {
 		// TODO Auto-generated method stub'
@@ -370,5 +373,15 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 
 		loadMarkersTask loader = new loadMarkersTask();
 		loader.execute(latLng);
+	}
+
+	@Override
+	public boolean onMarkerClick(Marker arg0) {
+		
+		updateMetarInfoTask updater = new updateMetarInfoTask();
+		String title = arg0.getTitle();
+		updater.execute(title);
+		// TODO Auto-generated method stub
+		return false;
 	}
 }	
