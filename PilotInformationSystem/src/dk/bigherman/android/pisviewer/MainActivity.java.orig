@@ -320,8 +320,12 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		protected void onPostExecute(List<MarkerOptions> result) {
 			// TODO Auto-generated method stub
 			super.onPostExecute(result);
-			MainActivity.this.setProgressBarIndeterminateVisibility(false);
+<<<<<<< HEAD
 			Log.i("loadMarkersTask", "Draw markers");
+=======
+			MainActivity.this.setProgressBarIndeterminateVisibility(false);
+			Log.i("Test", "Draw markers");
+>>>>>>> play
 			drawMapMarkers(result);			
 		}		
 	}
@@ -363,8 +367,12 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		protected void onPostExecute(JSONObject result) {
 			// TODO Auto-generated method stub
 			super.onPostExecute(result);
+<<<<<<< HEAD
 			Log.i("updateMetarInfoTask", "showMetarText");
+=======
 			MainActivity.this.setProgressBarIndeterminateVisibility(false);
+			Log.i("Test", "Show Metar Information");
+>>>>>>> play
 			showMetarText(result);
 		}
 	}
