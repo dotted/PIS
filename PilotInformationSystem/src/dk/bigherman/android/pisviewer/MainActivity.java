@@ -68,25 +68,16 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		{
 			try {
 				database.create();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
-		}
-		
-		
-		try 
-		{
-			// To do, rewrite it ALL
-			database.create();
-		}
-		catch (IOException ioe)
-		{
-			throw new Error("Unable to create database");
-		}
-		catch(SQLException sqle)
-		{
-			throw sqle;
+			catch (IOException e)
+			{
+				// TODO Auto-generated catch block
+				//throw new Error("Unable to create database");
+			}
+			catch(SQLException e)
+			{
+				//throw e;
+			}
 		}
 
 		serverIp = getResources().getString(R.string.server_ip);
@@ -126,22 +117,6 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 			loader.execute(latLng);
 			//            
 		}
-		database = new DataBaseHelper(this.getApplicationContext());
-		try 
-		{
-			// To do, rewrite it ALL
-			database.create();
-		}
-		catch (IOException ioe)
-		{
-			throw new Error("Unable to create database");
-		}
-		catch(SQLException sqle)
-		{
-			throw sqle;
-		}
-
-		serverIp = getResources().getString(R.string.server_ip);
 	}
 
 	public boolean onOptionsItemSelected (MenuItem item)
