@@ -63,7 +63,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		setContentView(R.layout.activity_main);
 
 		database = new DataBaseHelper(this.getApplicationContext());
-		
+
 		if (!database.isCreated())
 		{
 			try {
@@ -244,7 +244,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 				// TODO: handle exception
 				Log.i("jsonError", e.getMessage());
 			}
-			
+
 			if (colour.contentEquals("BLU"))
 			{
 				icon_state=R.drawable.icn_blue;
@@ -335,7 +335,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 
 			} catch (JSONException e) {        	
 				e.printStackTrace();
-//				Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+				//				Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
 			}
 			return metarJson;
 		}
@@ -347,11 +347,54 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 			Log.i("updateMetarInfoTask", "showMetarText");
 			showMetarText(result);
 		}
-
 	}
-	
+
+	private class updateMarkerInformation extends AsyncTask<MarkerString, Void, MarkerJson>
+	{
+
+		@Override
+		protected MarkerJson doInBackground(MarkerString... params) {
+			Log.i("updateMarkerInformation", "doInBackground");
+			String icaoCode = params[0].getString();
+
+			String jsonString = CommonMethods.getJson("http://" + serverIp + "/test_json.php?icao=" + icaoCode);
+
+			MarkerJson markerJson = new MarkerJson();
+			JSONObject metarJson = new JSONObject();
+
+			try {
+				metarJson = new JSONObject(jsonString);
+			} catch (JSONException e) {        	
+				e.printStackTrace();
+			}
+			markerJson.setJsonObject(metarJson);
+			markerJson.setMarker(params[0].getMarker());
+
+			return markerJson;
+		}
+
+		@Override
+		protected void onPostExecute(MarkerJson result) {
+			// TODO Auto-generated method stub
+			super.onPostExecute(result);
+			Log.i("updateMarkerInformation", "onPostExecute");
+			Marker marker = result.getMarker();
+			
+			String snippet = null;
+			try {
+				snippet = result.getJsonObject().getString("report");
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			marker.setSnippet(snippet);
+			marker.showInfoWindow();
+		}
+	}
+
 	@Override
 	public void onCameraChange(CameraPosition cameraPosition) {
+		//googleMap.clear();
 		// TODO Auto-generated method stub'
 		Log.i("onCameraChange", "Location changed");
 		LatLng latLng = cameraPosition.target;
@@ -362,10 +405,13 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 
 	@Override
 	public boolean onMarkerClick(Marker marker) {
+		updateMarkerInformation updater = new updateMarkerInformation();
 		
-		updateMetarInfoTask updater = new updateMetarInfoTask();
-		String title = marker.getTitle();
-		updater.execute(title);
+		MarkerString markerString = new MarkerString();
+		markerString.setString(marker.getTitle());
+		markerString.setMarker(marker);
+		marker.remove();
+		updater.execute(markerString);
 		// TODO Auto-generated method stub
 		return false;
 	}
