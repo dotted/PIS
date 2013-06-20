@@ -65,6 +65,7 @@ public class DataBaseHelper extends SQLiteOpenHelper
 	 */
 	public boolean isCreated()
 	{
+		Log.i("isCreated()", dbPath + dbName);
 		return isCreated(dbPath + dbName);
 	}
 
@@ -74,19 +75,20 @@ public class DataBaseHelper extends SQLiteOpenHelper
 	 */
 	public boolean isCreated(String databasePath)
 	{
+		Log.i("isCreated(" + dbPath + dbName + ")", "woop");
+		
 		SQLiteDatabase database = null;
 
 		try
 		{
 			database = SQLiteDatabase.openDatabase(databasePath, null, SQLiteDatabase.OPEN_READONLY);
 			database.close();
-			return true;
 		}
 		catch(SQLiteException e)
 		{
 			//database doesn't exist yet.
-			return false;
 		}
+		return database != null ? true : false;
 	}
 
 	/**
