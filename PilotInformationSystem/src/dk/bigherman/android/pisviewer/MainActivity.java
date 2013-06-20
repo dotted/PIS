@@ -115,10 +115,10 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 
 			googleMap.setOnCameraChangeListener(this);
 			googleMap.setOnMarkerClickListener(this);
-
+			//current visible mapBounds
+			LatLngBounds mapBounds = googleMap.getProjection().getVisibleRegion().latLngBounds;
 			loadMarkersTask loader = new loadMarkersTask();
-			loader.execute(latLng);
-			//            
+			loader.execute(mapBounds);
 		}
 	}
 
@@ -293,7 +293,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		return true;
 	}
 
-	private class loadMarkersTask extends AsyncTask<LatLng, Void, List<MarkerOptions>> 
+	private class loadMarkersTask extends AsyncTask<LatLngBounds, Void, List<MarkerOptions>> 
 	{
 
 		@Override
@@ -304,10 +304,9 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		}
 
 		@Override
-		protected List<MarkerOptions> doInBackground(LatLng... params) {
-			LatLng latLng = params[0];
-			LatLngBounds mapBounds = new LatLngBounds(new LatLng(latLng.latitude-3.0, latLng.longitude-(2.5/Math.cos(latLng.latitude*Math.PI/180))), new LatLng(latLng.latitude+3.0, latLng.longitude+(2.5/Math.cos(latLng.latitude*Math.PI/180))));
-
+		protected List<MarkerOptions> doInBackground(LatLngBounds... params) {
+			LatLngBounds mapBounds = params[0];
+			
 			database.open();
 			ArrayList<Airfield> airfields = database.airfieldsInArea(mapBounds);
 			database.close();
@@ -407,26 +406,30 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			Log.i("1","1");
 			marker.setSnippet(snippet);
+			Log.i("1","2");
 			marker.showInfoWindow();
+			Log.i("1","3");
 		}
 	}
 
 	@Override
 	public void onCameraChange(CameraPosition cameraPosition) {
-		//googleMap.clear();
+//		googleMap.clear();
 		// TODO Auto-generated method stub'
+		
+		//Clear map for markers
 		Log.i("onCameraChange", "Location changed");
-		LatLng latLng = cameraPosition.target;
-
+		//current visible mapBounds
+		LatLngBounds mapBounds = googleMap.getProjection().getVisibleRegion().latLngBounds;
 		loadMarkersTask loader = new loadMarkersTask();
-		loader.execute(latLng);
+		loader.execute(mapBounds);
 	}
 
 	@Override
 	public boolean onMarkerClick(Marker marker) {
 		updateMarkerInformation updater = new updateMarkerInformation();
-		
 		MarkerString markerString = new MarkerString();
 		markerString.setString(marker.getTitle());
 		markerString.setMarker(marker);
