@@ -32,6 +32,7 @@ import android.util.Log;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 
+import pl.mg6.android.maps.extensions.ClusteringSettings;
 import pl.mg6.android.maps.extensions.GoogleMap;
 import pl.mg6.android.maps.extensions.GoogleMap.OnCameraChangeListener;
 import pl.mg6.android.maps.extensions.GoogleMap.OnMarkerClickListener;
@@ -64,6 +65,9 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 	protected void onCreate(Bundle savedInstanceState) 
 	{
 		super.onCreate(savedInstanceState);
+		
+		map.setClustering(new ClusteringSettings().iconDataProvider(new PisIconProvider(getResources())).addMarkersDynamically(true));
+		
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
 		setContentView(R.layout.activity_main);
