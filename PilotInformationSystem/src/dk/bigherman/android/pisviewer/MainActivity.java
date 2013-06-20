@@ -329,6 +329,14 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 	private class updateMetarInfoTask extends AsyncTask<String, Void, JSONObject>
 	{
 
+		
+		@Override
+		protected void onPreExecute() {
+			// TODO Auto-generated method stub
+			super.onPreExecute();
+			MainActivity.this.setProgressBarIndeterminateVisibility(true);
+		}
+
 		@Override
 		protected JSONObject doInBackground(String... params) {
 			String icaoCode = params[0];
@@ -355,6 +363,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		protected void onPostExecute(JSONObject result) {
 			// TODO Auto-generated method stub
 			super.onPostExecute(result);
+			MainActivity.this.setProgressBarIndeterminateVisibility(false);
 			Log.i("Test", "Show Metar Information");
 			showMetarText(result);
 		}
