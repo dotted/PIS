@@ -19,12 +19,12 @@ public class DataBaseHelper extends SQLiteOpenHelper
 {		 
 	//The Android's default system path of your application database.
 	//private static String DB_PATH = "/data/data/dk.bigherman.android.pisviewer/databases/";
-	private String DB_PATH; 
-	private static String DB_NAME = "airfields.rdb";
+	private String dbPath; 
+	private static String dbName = "airfields.rdb";
 
-	private SQLiteDatabase myDataBase; 
+	private SQLiteDatabase database; 
 
-	private Context myContext;
+	private Context context;
 
 	/**
 	 * Constructor
@@ -33,50 +33,53 @@ public class DataBaseHelper extends SQLiteOpenHelper
 	 */
 	public DataBaseHelper(Context context) 
 	{
-		super(context, DB_NAME, null, 1);
-		this.myContext = context;
+		super(context, dbName, null, 1);
+		this.context = context;
 
-		DB_PATH = myContext.getFilesDir().getPath().toString();
+		dbPath = context.getFilesDir().getPath().toString();
 	}	
 
 	/**
 	 * Creates a empty database on the system and rewrites it with your own database.
 	 * 
 	 */
-	public void createDataBaseIfNotExists() throws IOException
+	public void create() throws IOException
 	{
-		boolean dbExist = checkDataBase();
+		//By calling this method an empty database will be created into the default system path
+		//of your application so we are going to be able to overwrite that database with our database.
+		this.getReadableDatabase();
 
-		if(!dbExist)
+		try
 		{
-			//By calling this method an empty database will be created into the default system path
-			//of your application so we are going to be able to overwrite that database with our database.
-			this.getReadableDatabase();
-
-			try
-			{
-				copyDataBase();
-			}
-			catch (IOException e)
-			{
-				throw new Error("Error copying database");
-			}
+			copy(dbName, dbPath + dbName);
 		}
+		catch (IOException e)
+		{
+			throw new Error("Error copying database");
+		}
+	}
+	
+	/**
+	 * Check if the database already exist to avoid re-copying the file each time you open the application.
+	 * @return true if it exists, false if it doesn't
+	 */
+	public boolean isCreated()
+	{
+		return isCreated(dbPath + dbName);
 	}
 
 	/**
 	 * Check if the database already exist to avoid re-copying the file each time you open the application.
 	 * @return true if it exists, false if it doesn't
 	 */
-	private boolean checkDataBase()
+	public boolean isCreated(String databasePath)
 	{
-		SQLiteDatabase checkDB = null;
+		SQLiteDatabase database = null;
 
 		try
 		{
-			String myPath = DB_PATH + DB_NAME;
-			checkDB = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
-			checkDB.close();
+			database = SQLiteDatabase.openDatabase(databasePath, null, SQLiteDatabase.OPEN_READONLY);
+			database.close();
 			return true;
 		}
 		catch(SQLiteException e)
@@ -91,49 +94,60 @@ public class DataBaseHelper extends SQLiteOpenHelper
 	 * system folder, from where it can be accessed and handled.
 	 * This is done by transfering bytestream.
 	 * */
-	private void copyDataBase() throws IOException
+	private void copy() throws IOException
+	{
+		copy(dbName, dbPath + dbName);
+	}
+	/**
+	 * Copies your database from your local assets-folder to the just created empty database in the
+	 * system folder, from where it can be accessed and handled.
+	 * This is done by transfering bytestream.
+	 * */
+	private void copy(String inputFilename, String outputFilepath) throws IOException
 	{
 		//Open your local db as the input stream
-		InputStream myInput = myContext.getAssets().open(DB_NAME);
-
-		// Path to the just created empty db
-		String outFileName = DB_PATH + DB_NAME;
-
+		InputStream input = context.getAssets().open(inputFilename);
+		
 		//Open the empty db as the output stream
-		OutputStream myOutput = new FileOutputStream(outFileName);
+		OutputStream output = new FileOutputStream(outputFilepath);
 
 		//transfer bytes from the inputfile to the outputfile
 		byte[] buffer = new byte[1024];
 		int length;
-		while ( (length = myInput.read(buffer)) > 0)
+		while ( (length = input.read(buffer)) > 0)
 		{
-			myOutput.write(buffer, 0, length);
+			output.write(buffer, 0, length);
 		}
 
 		//Close the streams
-		myOutput.flush();
-		myOutput.close();
-		myInput.close();
-
+		output.flush();
+		output.close();
+		input.close();
 	}
 
-	public void openDataBase() throws SQLException
+	public void open() throws SQLException
+	{
+		open(dbPath + dbName);
+	}
+	
+	public void open(String databaseFilepath) throws SQLException
 	{
 		//Open the database
-		String myPath = DB_PATH + DB_NAME;
-		myDataBase = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.OPEN_READONLY);
+		database = SQLiteDatabase.openDatabase(databaseFilepath, null, SQLiteDatabase.OPEN_READONLY);
 	}
+	
+	
 
 	@Override
 	public void close()
 	{
-		if(myDataBase != null)
+		if(database != null)
 		{
-			myDataBase.close();
+			database.close();
 		}
 		super.close();
-		this.myContext = null;
-		this.myDataBase = null;
+		this.context = null;
+		this.database = null;
 	}
 
 	@Override
@@ -156,7 +170,7 @@ public class DataBaseHelper extends SQLiteOpenHelper
 	{
 		String airfieldName;
 
-		Cursor myCursor = myDataBase.rawQuery("SELECT name FROM airfields WHERE icao ='" + icaoCode +"'", null);
+		Cursor myCursor = database.rawQuery("SELECT name FROM airfields WHERE icao ='" + icaoCode +"'", null);
 
 		myCursor.moveToFirst();
 		airfieldName = myCursor.getString(0);
@@ -170,7 +184,7 @@ public class DataBaseHelper extends SQLiteOpenHelper
 	{
 		LatLng latLng;
 
-		Cursor myCursor = myDataBase.rawQuery("SELECT lat, long FROM airfields WHERE icao ='" + icaoCode +"'", null);
+		Cursor myCursor = database.rawQuery("SELECT lat, long FROM airfields WHERE icao ='" + icaoCode +"'", null);
 		myCursor.moveToFirst();
 
 		latLng = new LatLng(myCursor.getFloat(0), myCursor.getFloat(1));
@@ -186,7 +200,7 @@ public class DataBaseHelper extends SQLiteOpenHelper
 		Log.i("airfieldsInArea", "SELECT icao, lat, long, name FROM airfields "
 				+ "WHERE lat >=" + mapBounds.southwest.latitude +" AND lat<=" + mapBounds.northeast.latitude + " AND long>=" + mapBounds.southwest.longitude + " AND long<=" + mapBounds.northeast.longitude);
 
-		Cursor myCursor = myDataBase.rawQuery("SELECT icao, lat, long, name FROM airfields "
+		Cursor myCursor = database.rawQuery("SELECT icao, lat, long, name FROM airfields "
 				+ "WHERE lat >=" + mapBounds.southwest.latitude +" AND lat<=" + mapBounds.northeast.latitude + " AND long>=" + mapBounds.southwest.longitude + " AND long<=" + mapBounds.northeast.longitude, null);
 
 		myCursor.moveToNext();
@@ -207,7 +221,7 @@ public class DataBaseHelper extends SQLiteOpenHelper
 	public boolean validateIcaoWithDb(String icao)
 	{
 		Log.i("validateIcao", "SELECT icao FROM airfields WHERE icao = '" + icao + "'");
-		Cursor myCursor = myDataBase.rawQuery("SELECT icao FROM airfields WHERE icao = '" + icao + "'", null);
+		Cursor myCursor = database.rawQuery("SELECT icao FROM airfields WHERE icao = '" + icao + "'", null);
 		if (myCursor.getCount() > 0)
 			return true;
 		return false;
