@@ -172,6 +172,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 
 	private void hideOSDKeyboard(View view)
 	{
+		Log.i("hideOSDKeyboard", "Hide OSD Keyboard");
 		InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
 		imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
 	}
@@ -199,7 +200,6 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 
 	public void showMetar(View view)
 	{
-		Log.i("showMetar", "Hide OSD Keyboard");
 		hideOSDKeyboard(view);
 		EditText icaoText = (EditText) findViewById(R.id.edit_icao);
 		String icaoCode = icaoText.getText().toString().toUpperCase();
