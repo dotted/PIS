@@ -1,6 +1,6 @@
 package dk.bigherman.android.pisviewer;
 
-import com.google.android.gms.maps.model.Marker;
+import pl.mg6.android.maps.extensions.Marker;
 
 public class MarkerString {
 	private String string;

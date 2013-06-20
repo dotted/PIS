@@ -27,6 +27,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/text_metar"
-        class="com.google.android.gms.maps.SupportMapFragment" />
+        class="pl.mg6.android.maps.extensions.SupportMapFragment" />
 
 </RelativeLayout>

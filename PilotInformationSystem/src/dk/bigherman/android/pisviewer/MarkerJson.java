@@ -2,7 +2,7 @@ package dk.bigherman.android.pisviewer;
 
 import org.json.JSONObject;
 
-import com.google.android.gms.maps.model.Marker;
+import pl.mg6.android.maps.extensions.Marker;
 
 public class MarkerJson {
 	private JSONObject jsonObject;
