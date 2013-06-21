@@ -2,7 +2,7 @@ package dk.bigherman.android.pisviewer;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.StrictMode;
+
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.view.Menu;
@@ -51,11 +51,12 @@ import dk.bigherman.android.pisviewer.DataBaseHelper;
 
 public class MainActivity extends FragmentActivity implements OnCameraChangeListener, OnMarkerClickListener 
 {
-	GoogleMap googleMap;
-	String serverIp = "";
-	DataBaseHelper database;
-	long airfieldsColourCodesTimestamp = 0;
-	JSONObject airfieldsColourCodes = null;
+	private GoogleMap map;
+	private MarkerString selectedMarker = null;
+	private String serverIp = "";
+	private DataBaseHelper database;
+	private long airfieldsColourCodesTimestamp = 0;
+	private JSONObject airfieldsColourCodes = null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
@@ -103,20 +104,20 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 
 			// Getting reference to the SupportMapFragment of activity_main.xml
 			SupportMapFragment fm = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-			googleMap = fm.getMap();
+			map = fm.getMap();
 			// Creating a LatLng object for the current location (somewhere near Aarhus! :-))
 			LatLng latLng = new LatLng(56.0, 10.3);
 
 			// Showing the current location in Google Map
-			googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+			map.moveCamera(CameraUpdateFactory.newLatLng(latLng));
 
 			// Zoom in the Google Map at a level where all (most) of Denmark will be visible
-			googleMap.animateCamera(CameraUpdateFactory.zoomTo(6));
+			map.animateCamera(CameraUpdateFactory.zoomTo(6));
 
-			googleMap.setOnCameraChangeListener(this);
-			googleMap.setOnMarkerClickListener(this);
+			map.setOnCameraChangeListener(this);
+			map.setOnMarkerClickListener(this);
 			//current visible mapBounds
-			LatLngBounds mapBounds = googleMap.getProjection().getVisibleRegion().latLngBounds;
+			LatLngBounds mapBounds = map.getProjection().getVisibleRegion().latLngBounds;
 			loadMarkersTask loader = new loadMarkersTask();
 			loader.execute(mapBounds);
 		}
@@ -186,7 +187,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		database.open();
 		LatLng mapCentre = database.icaoToLatLng(icaoCode);
 		database.close();
-		googleMap.moveCamera(CameraUpdateFactory.newLatLng(mapCentre));
+		map.moveCamera(CameraUpdateFactory.newLatLng(mapCentre));
 	}
 
 	private void showMetarText(JSONObject metarJson)
@@ -227,7 +228,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 	{
 		for (MarkerOptions markerOpt : markersOpt) 
 		{
-			googleMap.addMarker(markerOpt);
+			map.addMarker(markerOpt);
 		}
 	}
 
@@ -416,15 +417,18 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 
 	@Override
 	public void onCameraChange(CameraPosition cameraPosition) {
-//		googleMap.clear();
+		map.clear();
 		// TODO Auto-generated method stub'
 		
 		//Clear map for markers
 		Log.i("onCameraChange", "Location changed");
 		//current visible mapBounds
-		LatLngBounds mapBounds = googleMap.getProjection().getVisibleRegion().latLngBounds;
+		LatLngBounds mapBounds = map.getProjection().getVisibleRegion().latLngBounds;
 		loadMarkersTask loader = new loadMarkersTask();
 		loader.execute(mapBounds);
+		if (selectedMarker != null) {
+			selectedMarker.getMarker().showInfoWindow();
+		}
 	}
 
 	@Override
@@ -433,9 +437,13 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		MarkerString markerString = new MarkerString();
 		markerString.setString(marker.getTitle());
 		markerString.setMarker(marker);
-		marker.remove();
+
 		updater.execute(markerString);
-		// TODO Auto-generated method stub
+		
+		// Set selected marker so we can recover it when markers are removed
+		selectedMarker = markerString;
+		
+		// Center on marker and show infobox by returning false
 		return false;
 	}
 }	
