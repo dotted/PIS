@@ -7,6 +7,6 @@
     <string name="edit_message">Enter ICAO code here</string>
     <string name="button_getmetar">Get Metar!</string>
     <string name="menu_setserver">Set Server IP</string>
-    <string name="server_ip">78.156.110.102</string>
+    <string name="server_ip">pis.bxd.dk</string>
 
 </resources>
