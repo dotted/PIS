@@ -340,7 +340,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		@Override
 		protected JSONObject doInBackground(String... params) {
 			String icaoCode = params[0];
-			String readMetarFeed = CommonMethods.getJson("http://" + serverIp + "/test_json.php?icao=" + icaoCode);
+			String readMetarFeed = CommonMethods.getJson("https://" + serverIp + "/test_json.php?icao=" + icaoCode);
 			JSONObject metarJson = new JSONObject();
 
 			try {
@@ -377,7 +377,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 			Log.i("updateMarkerInformation", "doInBackground");
 			String icaoCode = params[0].getString();
 
-			String jsonString = CommonMethods.getJson("http://" + serverIp + "/test_json.php?icao=" + icaoCode);
+			String jsonString = CommonMethods.getJson("https://" + serverIp + "/test_json.php?icao=" + icaoCode);
 
 			MarkerJson markerJson = new MarkerJson();
 			JSONObject metarJson = new JSONObject();
