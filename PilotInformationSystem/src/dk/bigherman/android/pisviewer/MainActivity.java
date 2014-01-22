@@ -163,7 +163,7 @@ public class MainActivity extends FragmentActivity implements OnCameraChangeList
 		// Only refresh data every hour
 		if (System.currentTimeMillis() > airfieldsColourCodesTimestamp+3600000)
 		{
-			String jsonString = CommonMethods.getJson("http://" + serverIp + "/test_json.php?getColourCodes");
+			String jsonString = CommonMethods.getJson("https://" + serverIp + "/test_json.php?getColourCodes");
 			try {
 				airfieldsColourCodes = new JSONObject(jsonString);
 				airfieldsColourCodesTimestamp = System.currentTimeMillis();
