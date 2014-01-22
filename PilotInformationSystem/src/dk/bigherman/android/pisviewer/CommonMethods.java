@@ -11,12 +11,26 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
+
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.ssl.SSLSocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
+import java.security.KeyStore;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+
 
 import android.util.Log;
 
@@ -53,6 +67,7 @@ public final class CommonMethods
 
 		//String metarURL = "http://" + serverIP + "/test_json.php?icao="
 		//		+ icaoCode;
+		
 		StringBuilder builder = new StringBuilder();
 		HttpGet httpGet = new HttpGet(url);
 		HttpParams httpParameters = new BasicHttpParams();
@@ -90,17 +105,34 @@ public final class CommonMethods
 				break;
 			} catch (ClientProtocolException e) {
 				e.printStackTrace();
-				throw new RuntimeException(
-						"Error connecting to server - check IP address.  Use Settings menu to fix this");
+				//throw new RuntimeException(
+						//"Error connecting to server - check IP address.  Use Settings menu to fix this");
 			} catch (ConnectTimeoutException e) {
 				e.printStackTrace();
-				tries--;
 			} catch (IOException e) {
 				e.printStackTrace();
-				throw new RuntimeException(
-						"Error connecting to server - check IP address.  Use Settings menu to fix this");
+				//throw new RuntimeException(
+						//"Error connecting to server - check IP address.  Use Settings menu to fix this");
+			} finally {
+				tries++;
+				try {
+					Thread.sleep(10000*tries);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		} while (tries <= 5);
-		return builder.toString();
+		
+		if (builder != null) {
+			return builder.toString();
+		}
+		else
+		{
+			String empty = "";
+			return empty;
+		}
+		
+		
 	}
 }
